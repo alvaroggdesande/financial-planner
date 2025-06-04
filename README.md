@@ -26,7 +26,7 @@ This project is a personal financial planning and visualization application buil
 ## Project Structure
 
 financial-planner/
-├── Home.py # Main landing page
+├── home.py # Main landing page
 ├── pages/ # Streamlit pages
 │ ├── 01_💰_Transaction_Tracker.py
 │ └── ... # Other pages as they are developed

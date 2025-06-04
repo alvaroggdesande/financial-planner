@@ -44,6 +44,7 @@ venv_fin
 local_cache/
 my_secret_financial_data/ # If you create it inside the repo
 saved_scenarios/ # If scenarios might contain sensitive numbers
+bank_statements/
 
 # Streamlit
 .streamlit/
