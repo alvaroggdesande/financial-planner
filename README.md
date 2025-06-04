@@ -49,6 +49,7 @@ financial-planner/
 ├── .gitignore
 ├── requirements.txt
 └── README.md
+
 ## Setup
 
 1.  **Prerequisites:**
@@ -84,7 +85,7 @@ financial-planner/
 2.  Navigate to the project root directory.
 3.  Run the Streamlit app:
     ```bash
-    streamlit run Home.py
+    streamlit run home.py
     ```
 4.  Open your web browser and go to the local URL provided by Streamlit (usually `http://localhost:8501`).
 
