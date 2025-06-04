@@ -14,6 +14,8 @@ sys.path.append(str(PROJECT_ROOT)) # Add project root to path
 # Now you can import from src
 from src.data_loader import process_bank_data_folders, load_and_standardize_one_transaction_file
 from src.categorizer import categorize_transactions_df, CATEGORY_RULES # Import your rules too
+from src.utils import convert_currency_in_df
+
 
 st.set_page_config(page_title="Transaction Tracker", layout="wide")
 st.title("💰 Transaction Tracker")
@@ -85,6 +87,29 @@ elif data_source_option == "Process Local Folders":
         else:
             st.sidebar.error("Invalid path or folder does not exist.")
 
+# Currency. Runs if transactions_df is updated
+if not st.session_state.transactions_df.empty:
+    # Option for currency conversion
+    st.sidebar.markdown("---")
+    st.sidebar.header("Display Options")
+    display_currency = st.sidebar.selectbox("Display Currency:", ["DKK", "EUR"], key="display_currency_select")
+
+    # Get the base DKK dataframe
+    base_transactions_df = st.session_state.transactions_df.copy() # Work with a copy for display
+
+    if display_currency == "EUR":
+        # Fetch current DKK_TO_EUR_RATE from an API or config here if dynamic
+        # For now, using the one defined in utils
+        transactions_to_display = convert_currency_in_df(base_transactions_df, target_currency="EUR")
+        currency_suffix = "EUR"
+    else:
+        transactions_to_display = base_transactions_df
+        currency_suffix = "DKK"
+    
+    # --- NOW USE 'transactions_to_display' FOR ALL FILTERING AND PLOTTING ---
+    # And update y-axis labels for charts to include currency_suffix
+    # e.g., fig_line_ie.update_layout(yaxis_title=f"Amount ({currency_suffix})")
+
 # --- Categorization (runs if transactions_df is updated) ---
 if not st.session_state.transactions_df.empty:
     if 'Category' not in st.session_state.transactions_df.columns or st.session_state.transactions_df['Category'].isnull().all():
@@ -123,10 +148,29 @@ if not st.session_state.transactions_df.empty:
     with col2_filter:
         selected_max_date = st.date_input("End date", max_date, min_value=min_date, max_value=max_date, key="max_date_filter")
 
-    # Category Filter
     all_categories = sorted(st.session_state.transactions_df['Category'].unique().tolist())
-    selected_categories = st.multiselect("Filter by Category:", all_categories, default=all_categories, key="category_filter")
 
+    # Add a "Select All" checkbox
+    select_all_categories = st.checkbox("Select/Deselect All Categories", value=True, key="select_all_cat_cb")
+
+    if select_all_categories:
+        default_selected_categories = all_categories
+    else:
+        # If you want it to deselect all when unchecked, otherwise you might want it to remember previous selection
+        default_selected_categories = [] 
+
+    # The multiselect will now be controlled by the checkbox for its default state
+    selected_categories = st.multiselect(
+        "Filter by Category:", 
+        all_categories, 
+        default=default_selected_categories, 
+        key="category_filter"
+    )
+
+    # If the user manually changes multiselect, you might want to uncheck "Select All"
+    # This makes the interaction a bit more complex. A simpler way is that the checkbox
+    # just SETS the state of multiselect, and then multiselect can be changed independently.
+    # For a true toggle, you'd need more session_state logic to see if multiselect was changed.
     # Apply filters
     filtered_df = st.session_state.transactions_df[
         (st.session_state.transactions_df['Date'].dt.date >= selected_min_date) &
@@ -156,11 +200,26 @@ if not st.session_state.transactions_df.empty:
         category_spending = expenses_df.groupby('Category')['Absolute_Amount'].sum().sort_values(ascending=False)
         
         if not category_spending.empty:
-            # Plotly Express is already imported at the top
-            fig_pie = px.pie(category_spending, values='Absolute_Amount', names=category_spending.index, title="Expense Distribution")
-            st.plotly_chart(fig_pie, use_container_width=True)
+            fig_bar_horizontal = px.bar(
+                category_spending.reset_index(), # reset_index to get 'Category' as a column
+                y='Category', 
+                x='Absolute_Amount', 
+                orientation='h',
+                title="Expense by Category",
+                labels={'Absolute_Amount': 'Amount (DKK)', 'Category': 'Category'}
+            )
+            fig_bar_horizontal.update_layout(yaxis={'categoryorder':'total ascending'}) # Sort by value
+            st.plotly_chart(fig_bar_horizontal, use_container_width=True)
             
             st.bar_chart(category_spending)
+
+            fig_treemap = px.treemap(
+                category_spending.reset_index(), 
+                path=[px.Constant("All Expenses"), 'Category'], # Defines hierarchy
+                values='Absolute_Amount',
+                title="Expense Distribution Treemap"
+            )
+            st.plotly_chart(fig_treemap, use_container_width=True)    
         else:
             st.write("No expense data to display for category spending.")
 
@@ -190,13 +249,26 @@ if not st.session_state.transactions_df.empty:
 
         # 3. Net Savings Trend (Monthly)
         st.subheader("Net Savings Over Time (Monthly)")
-        monthly_net_savings = monthly_df.resample('M')['Amount'].sum().reset_index(name='Net Savings')
-        if not monthly_net_savings.empty:
-            fig_net_savings = px.bar(monthly_net_savings, x='Date', y='Net Savings', title="Monthly Net Savings")
-            fig_net_savings.add_hline(y=0, line_dash="dash", line_color="red") # Zero line
-            st.plotly_chart(fig_net_savings, use_container_width=True)
+        # Ensure monthly_df has 'Date' as index for resampling
+        # and 'Amount' is numeric
+        if not monthly_df.empty and 'Amount' in monthly_df.columns and pd.api.types.is_numeric_dtype(monthly_df['Amount']):
+            monthly_net_savings = monthly_df.resample('M')['Amount'].sum().reset_index() # Ensure 'Date' becomes a column
+            monthly_net_savings.rename(columns={'Amount': 'Net Savings'}, inplace=True) # Rename summed column
+
+            if not monthly_net_savings.empty:
+                fig_net_savings = px.bar(
+                    monthly_net_savings, 
+                    x='Date',  # Make sure 'Date' is the x-axis
+                    y='Net Savings', # Make sure 'Net Savings' is the y-axis
+                    title="Monthly Net Savings"
+                )
+                fig_net_savings.update_layout(yaxis_title=f"Net Savings ({currency_suffix})")
+                fig_net_savings.add_hline(y=0, line_dash="dash", line_color="red")
+                st.plotly_chart(fig_net_savings, use_container_width=True)
+            else:
+                st.write("Not enough data for net savings trend after resampling.")
         else:
-            st.write("No data for net savings trend.")
+            st.write("No valid data for net savings trend.")
 else:
     st.info("Please load transaction data using the sidebar options.")
 
