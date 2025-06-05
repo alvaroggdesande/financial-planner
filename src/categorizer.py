@@ -5,15 +5,16 @@ import re # For regular expressions, can be more powerful than simple keyword se
 # --- PASTE YOUR CATEGORY_RULES DICTIONARY HERE ---
 # Example:
 CATEGORY_RULES = {
-    "Groceries": ["coop365", "superbrugsen", "netto", "rema1000", "føtex", "meny", "lidl", "irma", "bilka togo"],
+    "Groceries": ["coop365", "superbrugsen", "netto", "rema1000", "føtex", "meny", "lidl", "irma", "bilka togo",
+                  "FAKTA"],
     "Salary": ["løn", "salary", "indkomst", "[YOUR COMPANY NAME HERE]"], # Replace with actual company name
-    "Sports": ["fitnessworld", "sats", "gym", "sportmaster", "fitness dk"],
+    "Sports": ["fitnessworld", "sats", "gym", "sportmaster", "fitness dk", "FITNESS"],
     "Rent/Mortgage": ["husleje", "rent", "boligudgift", "mortgage payment", "realkredit"],
     "Household": ["ikea", "jysk", "imerco", "silvan", "jem & fix", "bauhaus", "isenkram"],
     "Transport": ["dsb", "rejsekort", "movia", "gomore", "uber", "bolt", "benzin", "esso", "circle k", "shell", "færge", "easyjet", "sas", "norwegian", "ryanair", "brobizz", "parkering"],
     "Utilities": ["dong", "hofor", "øresundsenergi", "vand", "varme", "el", "gas", "forsyning"],
     "Shopping": ["magasin", "zalando", "hm", "elgiganten", "power", "asos", "boozt", "matas", "bog & ide"],
-    "Internet/Phone": ["fastnet", "bredbånd", "telia", "tdc", "hiper", "yousee", "oister", "cbb mobil", "telefon"],
+    "Internet/Phone": ["fastnet", "bredbånd", "telia", "tdc", "hiper", "yousee", "YouSee","oister", "cbb mobil", "telefon"],
     "Dining Out": ["restaurant", "cafe", "just eat", "wolt", "mcdonalds", "burger king", "pizzeria"],
     "Subscriptions": ["netflix", "spotify", "hbo", "disney+", "apple music", "storytel", "mofibo", "tv2 play", "viaplay", "avis", "blad"],
     "Healthcare": ["apotek", "læge", "tandlæge", "sygehus", "optiker", "fysioterapeut"],
@@ -21,10 +22,11 @@ CATEGORY_RULES = {
     "Cash Withdrawal": ["hævning", "atm", "kontant", "bankautomat"],
     "Entertainment": ["biograf", "kino", "koncert", "teater", "museum", "tivoli", "zoo"],
     "Gifts/Charity": ["gave", "donation", "indsamling", "røde kors"],
-    "Financial/Fees": ["gebyr", "renteudgift", "bank fee", "finance charge"],
+    "Financial/Fees": ["gebyr", "renteudgift", "bank fee", "finance charge", "Nordea-min"],
     "Education": ["kursus", "uddannelse", "skole", "universitet"],
     "Personal Care": ["frisør", "kosmetolog", "barber"],
     "Other Income": ["tilbagebetaling", "refund", "renteindtægt"], # Income not from salary
+    "Bank Interest": ["Renter"],
     # Add "Uncategorized" as a fallback if needed, or handle it in the function
 }
 # It might be better to load CATEGORY_RULES from a config file (JSON/YAML)

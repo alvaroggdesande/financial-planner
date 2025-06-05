@@ -7,95 +7,153 @@ import hashlib # For creating a unique ID for transactions to help with deduplic
 # --- [Keep the clean_amount_nordea, clean_amount_danske, 
 # ---  standardize_nordea_df, standardize_danske_df functions as defined previously] ---
 
-def clean_amount_nordea(amount_str):
-    if pd.isna(amount_str): return None
-    return float(str(amount_str).replace('.', '').replace(',', '.'))
+def clean_amount_nordea(amount):
+    """
+    If `amount` is already a float/int, return it directly.
+    Otherwise (a string like "-1.697,00"), strip out thousand-dots,
+    replace comma→dot, then float(…).
+    """
+    if pd.isna(amount):
+        return None
 
-def clean_amount_danske(amount_str):
-    if pd.isna(amount_str): return None
-    return float(str(amount_str))
+    # If Pandas already parsed it as a number, just return it
+    if isinstance(amount, (int, float)):
+        return float(amount)
+
+    # Otherwise do the “`.`→''” and “`,`→'.'” dance
+    s = str(amount).replace('.', '').replace(',', '.')
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+def clean_amount_danske(amount):
+    """
+    Same idea for Danske files (where Pandas may already parse to float).
+    """
+    if pd.isna(amount):
+        return None
+    if isinstance(amount, (int, float)):
+        return float(amount)
+    try:
+        return float(str(amount))
+    except ValueError:
+        return None
+
 
 def standardize_nordea_df(df_in):
     df = df_in.copy()
     rename_map = {
-        'Booking date': 'Raw_Date', 'Amount': 'Raw_Amount',
-        'Title': 'Description', 'Balance': 'Raw_Balance', 'Currency': 'Currency'
+        'Booking date': 'Raw_Date',
+        'Amount': 'Raw_Amount',
+        'Title': 'Description',
+        'Balance': 'Raw_Balance',
+        'Currency': 'Currency'
     }
     df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns}, inplace=True)
-    
-    df['Status'] = df['Raw_Date'].apply(lambda x: 'Reserved' if str(x).strip().lower() == 'reserved' else 'Booked')
-    df['Date'] = pd.to_datetime(df.loc[df['Status'] == 'Booked', 'Raw_Date'], format='%Y/%m/%d', errors='coerce')
-    
-    if 'Raw_Amount' in df.columns: df['Amount'] = df['Raw_Amount'].apply(clean_amount_nordea)
-    if 'Raw_Balance' in df.columns: df['Balance'] = df['Raw_Balance'].apply(clean_amount_nordea)
-    
+
+    # “Reserved” rows have Raw_Date == "Reserved"
+    df['Status'] = df['Raw_Date'].apply(
+        lambda x: 'Reserved' if str(x).strip().lower() == 'reserved' else 'Booked'
+    )
+    # Only parse actual dates for rows where Status=='Booked'
+    df['Date'] = pd.to_datetime(
+        df.loc[df['Status'] == 'Booked', 'Raw_Date'],
+        format='%Y/%m/%d',
+        errors='coerce'
+    )
+
+    if 'Raw_Amount' in df.columns:
+        df['Amount'] = df['Raw_Amount'].apply(clean_amount_nordea)
+    if 'Raw_Balance' in df.columns:
+        df['Balance'] = df['Raw_Balance'].apply(clean_amount_nordea)
+
     df['Original_Bank'] = 'Nordea'
     standard_cols = ['Date', 'Description', 'Amount', 'Balance', 'Currency', 'Original_Bank', 'Status']
     for col in standard_cols:
-        if col not in df.columns: df[col] = None
+        if col not in df.columns:
+            df[col] = None
+
     return df[standard_cols]
 
 def standardize_danske_df(df_in):
     df = df_in.copy()
     rename_map = {
-        'Booking date': 'Raw_Date', 'Amount': 'Raw_Amount',
-        'Title': 'Description', 'Balance': 'Raw_Balance', 'Currency': 'Currency'
+        'Booking date': 'Raw_Date',
+        'Amount': 'Raw_Amount',
+        'Title': 'Description',
+        'Balance': 'Raw_Balance',
+        'Currency': 'Currency'
     }
     df.rename(columns={k: v for k, v in rename_map.items() if k in df.columns}, inplace=True)
-    
-    df['Date'] = pd.to_datetime(df['Raw_Date'], format='%Y-%m-%d', errors='coerce')
+
+    df['Date'] = pd.to_datetime(
+        df['Raw_Date'],
+        format='%Y-%m-%d',
+        errors='coerce'
+    )
     df['Status'] = df['Date'].apply(lambda x: 'Pending/Unknown' if pd.isna(x) else 'Booked')
-    
-    if 'Raw_Amount' in df.columns: df['Amount'] = df['Raw_Amount'].apply(clean_amount_danske)
-    if 'Raw_Balance' in df.columns: df['Balance'] = df['Raw_Balance'].apply(clean_amount_danske)
-        
+
+    if 'Raw_Amount' in df.columns:
+        df['Amount'] = df['Raw_Amount'].apply(clean_amount_danske)
+    if 'Raw_Balance' in df.columns:
+        df['Balance'] = df['Raw_Balance'].apply(clean_amount_danske)
+
     df['Original_Bank'] = 'Danske Bank'
     standard_cols = ['Date', 'Description', 'Amount', 'Balance', 'Currency', 'Original_Bank', 'Status']
     for col in standard_cols:
-        if col not in df.columns: df[col] = None
+        if col not in df.columns:
+            df[col] = None
+
     return df[standard_cols]
 
 # --- [This is the function you were primarily focused on for loading one file] ---
 def load_and_standardize_one_transaction_file(file_path_or_buffer, bank_name):
     """
-    Loads transactions from a SINGLE CSV file, identifies the bank, and standardizes the DataFrame.
+    Loads a single CSV, detects whether it’s Nordea or Danske,
+    and returns a standardized DataFrame using the fixed cleaners above.
     """
     df_raw = None
-    standardized_df = pd.DataFrame()
-
     try:
-        file_content_stream = None
+        # Read the raw bytes into a StringIO so we can try utf-8-sig, then fallback,
+        # and so Pandas either sees the raw "-1697,00" or it sees a float -1697.0.
         if isinstance(file_path_or_buffer, (str, Path)):
-            # For local file paths, open and read, then wrap in StringIO
-            with open(file_path_or_buffer, 'r', encoding='utf-8-sig') as f: # utf-8-sig handles BOM
-                file_content_stream = StringIO(f.read())
-        elif hasattr(file_path_or_buffer, 'getvalue'): # Streamlit UploadedFile
+            with open(file_path_or_buffer, 'r', encoding='utf-8-sig') as f:
+                raw_text = f.read()
+            buf = StringIO(raw_text)
+        elif hasattr(file_path_or_buffer, 'getvalue'):
+            # Streamlit “UploadedFile” style buffer
             try:
-                file_content_stream = StringIO(file_path_or_buffer.getvalue().decode('utf-8-sig'))
+                buf = StringIO(file_path_or_buffer.getvalue().decode('utf-8-sig'))
             except UnicodeDecodeError:
-                file_path_or_buffer.seek(0) # Reset buffer pointer
-                file_content_stream = StringIO(file_path_or_buffer.getvalue().decode('latin1'))
+                file_path_or_buffer.seek(0)
+                buf = StringIO(file_path_or_buffer.getvalue().decode('latin1'))
             file_path_or_buffer.seek(0)
         else:
             raise ValueError("Unsupported file input type.")
 
         if bank_name.lower() == 'nordea':
-            try: # Try direct conversion with pandas
-                df_raw = pd.read_csv(file_content_stream, sep=';', decimal=',')
-            except ValueError: # Fallback to string loading if direct float conversion fails
-                if hasattr(file_content_stream, 'seek'): file_content_stream.seek(0)
-                df_raw = pd.read_csv(file_content_stream, sep=';')
-            standardized_df = standardize_nordea_df(df_raw)
-        elif bank_name.lower() == 'danske':
-            df_raw = pd.read_csv(file_content_stream, sep=',')
-            standardized_df = standardize_danske_df(df_raw)
-        else:
-            raise ValueError(f"Unsupported bank_name: {bank_name}. Supported: 'nordea', 'danske'")
+            # *** NOTE: We keep decimal=',' so Pandas may “already numeric‐convert”***
+            try:
+                df_raw = pd.read_csv(buf, sep=';', decimal=',')
+            except ValueError:
+                buf.seek(0)
+                df_raw = pd.read_csv(buf, sep=';')
 
-        return standardized_df
+            standardized = standardize_nordea_df(df_raw)
+
+        elif bank_name.lower() == 'danske':
+            buf.seek(0)
+            df_raw = pd.read_csv(buf, sep=',')
+            standardized = standardize_danske_df(df_raw)
+
+        else:
+            raise ValueError(f"Unsupported bank_name: {bank_name}. Must be 'nordea' or 'danske'.")
+
+        return standardized
 
     except Exception as e:
-        print(f"Error in load_and_standardize_one_transaction_file for {bank_name} ({file_path_or_buffer}): {e}")
+        print(f"Error in load_and_standardize_one_transaction_file({bank_name}): {e}")
         return pd.DataFrame()
 
 # --- [NEW FUNCTION for processing folders] ---

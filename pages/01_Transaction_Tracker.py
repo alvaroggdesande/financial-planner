@@ -227,7 +227,7 @@ if not st.session_state.transactions_df.empty:
         st.subheader("Income vs. Expenses Over Time (Monthly)")
         # Resample to get monthly sums
         # Income: positive amounts, Expenses: negative amounts (sum directly)
-        monthly_summary = monthly_df.resample('M')['Amount'].agg(
+        monthly_summary = monthly_df.resample('ME')['Amount'].agg(
             Income=lambda x: x[x > 0].sum(),
             Expenses=lambda x: x[x < 0].sum() # Expenses are negative, sum will be negative
         ).reset_index()
@@ -252,7 +252,7 @@ if not st.session_state.transactions_df.empty:
         # Ensure monthly_df has 'Date' as index for resampling
         # and 'Amount' is numeric
         if not monthly_df.empty and 'Amount' in monthly_df.columns and pd.api.types.is_numeric_dtype(monthly_df['Amount']):
-            monthly_net_savings = monthly_df.resample('M')['Amount'].sum().reset_index() # Ensure 'Date' becomes a column
+            monthly_net_savings = monthly_df.resample('ME')['Amount'].sum().reset_index() # Ensure 'Date' becomes a column
             monthly_net_savings.rename(columns={'Amount': 'Net Savings'}, inplace=True) # Rename summed column
 
             if not monthly_net_savings.empty:
