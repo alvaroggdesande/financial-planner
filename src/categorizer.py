@@ -10,10 +10,12 @@ CATEGORY_RULES = {
     "Salary": ["løn", "salary", "indkomst", "Lønoverførsel"], # Replace with actual company name
     "Sports": ["fitnessworld", "sats", "gym", "sportmaster", "fitness dk", "FITNESS"],
     "Rent/Mortgage": ["husleje", "rent", "boligudgift", "mortgage payment", "realkredit"],
-    "Household": ["ikea", "jysk", "imerco", "silvan", "jem & fix", "bauhaus", "isenkram"],
+    "Household": ["ikea", "jysk", "imerco", "silvan", "jem & fix", "bauhaus", "isenkram", "ILVA"],
     "Transport": ["dsb", "rejsekort", "movia", "gomore", "uber", "bolt", "benzin", "esso", "circle k"
-                  , "shell", "færge", "easyjet", "sas", "norwegian", "ryanair", "brobizz", "parkering"
+                  , "shell", "færge", "brobizz", "parkering"
                   ,"METRO", "RENFE", "ALSA"],
+    "Flights": ["easyjet", "sas", "norwegian", "ryanair", "Iberia", "IBEXPRESS","Air china", "Qatar air"
+                ,'ETIHAD AIRW', "INDIGOAIR"],
     "Utilities": ["dong", "hofor", "øresundsenergi", "vand", "varme", "gas", "forsyning", "ANDEL"],
     "Shopping": ["magasin", "zalando", "hm", "elgiganten", "power", "asos", "boozt", "matas", "bog & ide",
                  "EL CORTE INGLES"],
@@ -31,8 +33,10 @@ CATEGORY_RULES = {
     "Other Income": ["tilbagebetaling", "refund", "renteindtægt"], # Income not from salary
     "Bank Interest": ["Renter"],
     "Rent Flat": ["Danielle Benamour", "Domus Apartments DK"],
+    "Deposit Flat": ["Deposit"],
     "Broker investments": ["xtb.com"],
     "Revolut transfers": ["REVOLUT"],
+    "Tax payments": ["Skat"],
     # Add "Uncategorized" as a fallback if needed, or handle it in the function
 }
 # It might be better to load CATEGORY_RULES from a config file (JSON/YAML)
