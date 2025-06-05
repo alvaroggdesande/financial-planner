@@ -163,3 +163,33 @@ def display_net_worth_snapshot(currency_suffix):
     st.markdown("---")
     net_worth = total_assets - total_liabilities
     st.metric("Estimated Net Worth", f"{net_worth:.2f} {currency_suffix}", delta_color="off")
+
+
+def calculate_historical_average_annual_living_expenses(
+    categorized_df: pd.DataFrame, 
+    exclude_categories: list = None
+) -> float:
+    """
+    Calculates average annual living expenses from historical categorized transactions.
+    Excludes specified categories (e.g., mortgage, large investments).
+    """
+    if categorized_df.empty:
+        return 0.0
+    if exclude_categories is None:
+        exclude_categories = []
+
+    expenses_df = categorized_df[categorized_df['Amount'] < 0].copy()
+    
+    # Filter out explicitly excluded categories
+    expenses_df = expenses_df[~expenses_df['Category'].isin(exclude_categories)]
+    
+    expenses_df['Date'] = pd.to_datetime(expenses_df['Date'])
+    expenses_df['YearMonth'] = expenses_df['Date'].dt.to_period('M')
+    
+    monthly_total_expenses = expenses_df.groupby('YearMonth')['Amount'].sum().abs()
+    
+    if monthly_total_expenses.empty:
+        return 0.0
+        
+    average_monthly_expense = monthly_total_expenses.mean()
+    return average_monthly_expense * 12
