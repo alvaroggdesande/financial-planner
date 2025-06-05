@@ -34,7 +34,7 @@ CATEGORY_RULES = {
                     ,"MobilePay Carlos"
                     ,"MAD OG KAFFE", 'TABERNA', "RTE.", "CASA", "Burgermeister", "RINCON", "CIRKUS APS"
                     ,"FIVE GUYS", "BURGER", "BODEGAS", "SUSHI", "FOOD", "ISMAGERIET", "THAI KACHA"
-                    ,"7-ELEVEN", "MAGDALENA", "SHAKE"],
+                    ,"7-ELEVEN", "MAGDALENA", "SHAKE", "Brauhaus"],
     "Drinks": ["NIGHTPAY", "PROUD MARY CPH", "Sorte Firkant", "IRISH PUB", "ANARKOLI", "BAR", "BLUME"
                 ,"LAVAPI", "STELLA POLARIS", "MIKKELLER", "CERVECERIA", "THE LIVING ROOM"
                 ,"Dimitrios", "Christos", "MobilePay Ninci"],
@@ -45,7 +45,7 @@ CATEGORY_RULES = {
                     ,"MobilePay Beatriz"], 
     "Cash Withdrawal": ["hævning", "atm", "kontant", "bankautomat"],
     "Entertainment": ["biograf", "kino", "koncert", "teater", "museum", "tivoli", "zoo", "Instant Gaming"
-                        ,"BILLETLUGEN.DK", "BLS*MYHERITAGE", "GOOGLE", "Nintendo"],
+                        ,"BILLETLUGEN.DK", "BLS*MYHERITAGE", "GOOGLE", "Nintendo", "MUSEUM"],
     "Gifts/Charity": ["gave", "donation", "indsamling", "røde kors"],
     "Financial/Fees": ["gebyr", "renteudgift", "bank fee", "finance charge", "Nordea-min"],
     "Education": ["kursus", "uddannelse", "skole", "universitet"],
