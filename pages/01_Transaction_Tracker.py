@@ -123,7 +123,12 @@ if data_source_option == "Upload Files":
     if uploaded_list:
         st.session_state.uploaded_files_cache = []
         for idx, upload in enumerate(uploaded_list):
-            bank_map = {"Nordea (DK)": "nordea", "Danske Bank (DK)": "danske"}
+            # 1) Add "Nordea 2 (DK)" → "nordea2"
+            bank_map = {
+                "Nordea (DK)":  "nordea",
+                "Nordea 2 (DK)": "nordea2",
+                "Danske Bank (DK)": "danske"
+            }
             choice = st.sidebar.selectbox(
                 f"Select bank for {upload.name}:",
                 list(bank_map.keys()),
