@@ -5,28 +5,34 @@ import re # For regular expressions, can be more powerful than simple keyword se
 # --- PASTE YOUR CATEGORY_RULES DICTIONARY HERE ---
 # Example:
 CATEGORY_RULES = {
-    "Groceries": ["coop365", "superbrugsen", "netto", "rema1000", "føtex", "meny", "lidl", "irma", "bilka togo",
-                  "FAKTA"],
-    "Salary": ["løn", "salary", "indkomst", "[YOUR COMPANY NAME HERE]"], # Replace with actual company name
+    "Groceries": ["coop365", "Coop App","superbrugsen", "netto", "rema1000", "føtex", "meny", "lidl", "irma", "bilka togo",
+                  "FAKTA", "FOETEX", "SPAR", "NORMAL"],
+    "Salary": ["løn", "salary", "indkomst", "Lønoverførsel"], # Replace with actual company name
     "Sports": ["fitnessworld", "sats", "gym", "sportmaster", "fitness dk", "FITNESS"],
     "Rent/Mortgage": ["husleje", "rent", "boligudgift", "mortgage payment", "realkredit"],
     "Household": ["ikea", "jysk", "imerco", "silvan", "jem & fix", "bauhaus", "isenkram"],
-    "Transport": ["dsb", "rejsekort", "movia", "gomore", "uber", "bolt", "benzin", "esso", "circle k", "shell", "færge", "easyjet", "sas", "norwegian", "ryanair", "brobizz", "parkering"],
-    "Utilities": ["dong", "hofor", "øresundsenergi", "vand", "varme", "el", "gas", "forsyning"],
-    "Shopping": ["magasin", "zalando", "hm", "elgiganten", "power", "asos", "boozt", "matas", "bog & ide"],
+    "Transport": ["dsb", "rejsekort", "movia", "gomore", "uber", "bolt", "benzin", "esso", "circle k"
+                  , "shell", "færge", "easyjet", "sas", "norwegian", "ryanair", "brobizz", "parkering"
+                  ,"METRO", "RENFE", "ALSA"],
+    "Utilities": ["dong", "hofor", "øresundsenergi", "vand", "varme", "gas", "forsyning", "ANDEL"],
+    "Shopping": ["magasin", "zalando", "hm", "elgiganten", "power", "asos", "boozt", "matas", "bog & ide",
+                 "EL CORTE INGLES"],
     "Internet/Phone": ["fastnet", "bredbånd", "telia", "tdc", "hiper", "yousee", "YouSee","oister", "cbb mobil", "telefon"],
     "Dining Out": ["restaurant", "cafe", "just eat", "wolt", "mcdonalds", "burger king", "pizzeria"],
     "Subscriptions": ["netflix", "spotify", "hbo", "disney+", "apple music", "storytel", "mofibo", "tv2 play", "viaplay", "avis", "blad"],
     "Healthcare": ["apotek", "læge", "tandlæge", "sygehus", "optiker", "fysioterapeut"],
     "Transfers": ["overførsel", "transfer", "egen konto", "mobilepay overførsel"], # To filter out internal movements
     "Cash Withdrawal": ["hævning", "atm", "kontant", "bankautomat"],
-    "Entertainment": ["biograf", "kino", "koncert", "teater", "museum", "tivoli", "zoo"],
+    "Entertainment": ["biograf", "kino", "koncert", "teater", "museum", "tivoli", "zoo", "Instant Gaming"],
     "Gifts/Charity": ["gave", "donation", "indsamling", "røde kors"],
     "Financial/Fees": ["gebyr", "renteudgift", "bank fee", "finance charge", "Nordea-min"],
     "Education": ["kursus", "uddannelse", "skole", "universitet"],
     "Personal Care": ["frisør", "kosmetolog", "barber"],
     "Other Income": ["tilbagebetaling", "refund", "renteindtægt"], # Income not from salary
     "Bank Interest": ["Renter"],
+    "Rent Flat": ["Danielle Benamour", "Domus Apartments DK"],
+    "Broker investments": ["xtb.com"],
+    "Revolut transfers": ["REVOLUT"],
     # Add "Uncategorized" as a fallback if needed, or handle it in the function
 }
 # It might be better to load CATEGORY_RULES from a config file (JSON/YAML)
