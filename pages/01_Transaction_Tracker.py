@@ -14,6 +14,18 @@ from src.data_loader import process_bank_data_folders, load_and_standardize_one_
 from src.categorizer import categorize_transactions_df, CATEGORY_RULES
 from src.utils import convert_currency_in_df, DKK_TO_EUR_RATE
 
+from src.plotting_functions import (
+    plot_spending_by_category, 
+    plot_income_expense_trend, 
+    plot_net_savings_trend,
+    plot_balance_trend,
+    plot_monthly_spending_by_category,
+    plot_percentage_change_expenses,
+    plot_savings_rate_trend
+)
+
+from src.analysis_functions import display_big_ticket_expenses, category_deep_dive_section, display_net_worth_snapshot
+
 st.set_page_config(page_title="Transaction Tracker", layout="wide")
 st.title("💰 Transaction Tracker")
 
@@ -231,86 +243,53 @@ if st.session_state.data_loaded_successfully and not st.session_state.categorize
             # --- Financial Summary ---
             st.header("Financial Summary")
 
-            # 1. Spending by Category (only st.bar_chart)
-            st.subheader(f"Spending by Category ({currency_suffix})")
-            expenses = df_filtered[df_filtered['Amount'] < 0].copy()
-            if not expenses.empty:
-                expenses['Absolute_Amount'] = expenses['Amount'].abs().fillna(0)
-
-                cat_spend = (
-                    expenses.groupby('Category')['Absolute_Amount']
-                    .sum()
-                    .sort_values(ascending=False)
-                    .fillna(0)
-                )
-
-                if not cat_spend.empty:
-                    # Make sure index is 'Category' and values are numeric
-                    cat_spend.index.name = 'Category'
-                    st.bar_chart(cat_spend)
-                else:
-                    st.write("No expense data after grouping by category.")
-            else:
-                st.write("No negative‐amount transactions in this date range.")
-
-            # 2. Income vs. Expense Trend (Monthly) (only st.bar_chart)
-            st.subheader(f"Income vs. Expenses Over Time (Monthly, {currency_suffix})")
-            df_month = df_filtered.copy()
-            df_month.set_index('Date', inplace=True)
-            df_month['Amount'] = pd.to_numeric(df_month['Amount'], errors='coerce').fillna(0)
-
-            monthly_summary = (
-                df_month.resample('M')['Amount']
-                .agg(
-                    Income=lambda x: x[x > 0].sum(),
-                    Expenses=lambda x: x[x < 0].sum()
-                )
-                .reset_index()
+            # Call your modular plotting functions
+            # 1. Spending by Category
+            plot_spending_by_category(
+                df_filtered[df_filtered['Amount'] < 0].copy(), # Pass only expenses
+                currency_suffix
             )
-            monthly_summary['Income'] = monthly_summary['Income'].fillna(0)
-            monthly_summary['Expenses'] = monthly_summary['Expenses'].fillna(0).abs()
+            
+            # 2. Income vs. Expense Trend
+            plot_income_expense_trend(df_filtered.copy(), currency_suffix)
 
-            if not monthly_summary.empty:
-                # Put Date as index so st.bar_chart uses actual dates
-                monthly_idx = monthly_summary.set_index('Date')[['Income', 'Expenses']]
-                st.bar_chart(monthly_idx)
-            else:
-                st.write("Not enough data to form a monthly income/expense trend.")
+            # 3. Net Savings Trend
+            plot_net_savings_trend(df_filtered.copy(), currency_suffix)
 
-            # 3. Net Savings Trend (Monthly) — only st.bar_chart, as requested
-            st.subheader(f"Net Savings Over Time (Monthly, {currency_suffix})")
-            if not df_month.empty:
-                net_month = df_month.resample('ME')['Amount'].sum().reset_index()
-                net_month.rename(columns={'Amount': 'Net Savings'}, inplace=True)
-                net_month['Net Savings'] = net_month['Net Savings'].fillna(0)
+            # 4. Balance Trend
+            plot_balance_trend(df_filtered.copy(), currency_suffix)
+            
+            # 5. Monthly Spending by Category (NEW)
+            plot_monthly_spending_by_category(
+                df_filtered[df_filtered['Amount'] < 0].copy(), # Pass only expenses
+                currency_suffix
+            )
 
-                if not net_month.empty:
-                    # Streamlit bar chart with Date as index
-                    net_idx = net_month.set_index('Date')['Net Savings']
-                    st.bar_chart(net_idx)
-                else:
-                    st.write("Not enough data for net savings trend.")
-            else:
-                st.write("No valid data after indexing for net savings.")
+            # 6. Percentage Change in Expenses (NEW)
+            plot_percentage_change_expenses(
+                df_filtered[df_filtered['Amount'] < 0].copy(), # Pass only expenses
+                currency_suffix
+            )
 
-            # 4. Monthly Balance Trend (NEW)
-            st.subheader(f"Average/End‐of‐Month Balance ({currency_suffix})")
-            # Use the raw Balance column (before currency conversion) if you want an exact bank balance;
-            # otherwise, convert “Balance” to numeric and pick the last entry of each month.
-            if 'Balance' in df_filtered.columns:
-                df_bal = df_filtered.copy()
-                df_bal['Balance'] = pd.to_numeric(df_bal['Balance'], errors='coerce')
-                df_bal = df_bal.dropna(subset=['Balance'])
-                if not df_bal.empty:
-                    df_bal.set_index('Date', inplace=True)
-                    # Take the last observed 'Balance' in each month
-                    monthly_balance = df_bal.resample('ME')['Balance'].last().reset_index()
-                    monthly_balance.index = monthly_balance['Date']
-                    st.line_chart(monthly_balance['Balance'])
-                else:
-                    st.write("No valid Balance data to plot.")
-            else:
-                st.write("No `Balance` column available to show balance trend.")
+            # 7. Savings Rate Trend (NEW)
+            plot_savings_rate_trend(df_filtered.copy(), currency_suffix)
+
+            # -------- From analysis_functions --------
+            # 8. Big Ticket Expense Tracker (NEW)
+            display_big_ticket_expenses(
+                df_filtered[df_filtered['Amount'] < 0].copy(), # Pass only expenses
+                currency_suffix
+            )
+            # 9. Category Deep Dive Section (NEW)
+            st.markdown("---") # Add a separator
+            category_deep_dive_section(
+                df_filtered[df_filtered['Amount'] < 0].copy(), # Pass only expenses
+                currency_suffix
+            )
+
+            # 10. Net Worth Snapshot (NEW - Manual)
+            st.markdown("---")
+            display_net_worth_snapshot(currency_suffix)
 
 else:
     st.info("Please load and categorize transaction data using the sidebar.")

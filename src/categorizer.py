@@ -3,34 +3,54 @@ import pandas as pd
 import re # For regular expressions, can be more powerful than simple keyword search
 
 # --- PASTE YOUR CATEGORY_RULES DICTIONARY HERE ---
-# Example:
 CATEGORY_RULES = {
-    "Groceries": ["coop365", "Coop App","superbrugsen", "netto", "rema1000", "føtex", "meny", "lidl", "irma", "bilka togo",
-                  "FAKTA", "FOETEX", "SPAR", "NORMAL"],
-    "Salary": ["løn", "salary", "indkomst", "Lønoverførsel"], # Replace with actual company name
-    "Sports": ["fitnessworld", "sats", "gym", "sportmaster", "fitness dk", "FITNESS"],
+    "Groceries": ["coop365", "COOP 365","Coop App","superbrugsen", "netto", "rema1000", "føtex", "meny", "lidl", "irma", "bilka togo",
+                  "FAKTA", "FOETEX", "SPAR", "NORMAL", "REMA 1000", "BASALT"
+                  ,"MERCADONA", "ALIMENTACION"],
+    "Salary": ["løn", "salary", "indkomst", "Lønoverførsel", "Allyy"],
+    "Sports": ["fitnessworld", "sats", "gym", "sportmaster", "fitness dk", "FITNESS", "OLYMPIAKOS"
+                ,"MobilePay Juan Marti", "MobilePay Jordi", "MobilePay Oscar Goto"
+                ,"MobilePay Oscar Meji", "MobilePay Venkatesh"],
+    "Education": ["IMF FORMACION", "IMF"],
     "Rent/Mortgage": ["husleje", "rent", "boligudgift", "mortgage payment", "realkredit"],
-    "Household": ["ikea", "jysk", "imerco", "silvan", "jem & fix", "bauhaus", "isenkram", "ILVA"],
+    "Household": ["ikea", "jysk", "imerco", "silvan", "jem & fix", "bauhaus", "isenkram", "ILVA"
+                    ,"MobilePay Niklas Thr", "BOLIGPORTA"],
     "Transport": ["dsb", "rejsekort", "movia", "gomore", "uber", "bolt", "benzin", "esso", "circle k"
-                  , "shell", "færge", "brobizz", "parkering"
+                  , "shell", "færge", "brobizz", "parkering", "DOT APP"
                   ,"METRO", "RENFE", "ALSA"],
     "Flights": ["easyjet", "sas", "norwegian", "ryanair", "Iberia", "IBEXPRESS","Air china", "Qatar air"
-                ,'ETIHAD AIRW', "INDIGOAIR"],
+                ,'ETIHAD AIRW', "INDIGOAIR", "BRUSS AIRLI", "VUELING", "AIRLINES"],
+    "Travel": ["LAEGENS VACCINATIONS", "OWNERS CARS", "MONDO", "HEYMONDO", "VND", "INR", "LKR"
+                "Vasileios", "MobilePay Francisco" ,"AIRALO", "HOTEL", "NY CARLSBERG", "BOUTIQUE", "GRUPOGALDANA",
+                "Berlin", "INDIAN RAILWAY", "RAILWAY", "12GO"],
     "Utilities": ["dong", "hofor", "øresundsenergi", "vand", "varme", "gas", "forsyning", "ANDEL"],
-    "Shopping": ["magasin", "zalando", "hm", "elgiganten", "power", "asos", "boozt", "matas", "bog & ide",
-                 "EL CORTE INGLES"],
+    "Shopping": ["magasin", "zalando", "hm", "elgiganten", "power", "asos", "boozt", "matas", "bog & ide"
+                 ,"EL CORTE INGLES", "UNIQLO", "GlobalE Jabra", "Telerepair", "CYKLER", "DECATHLON"
+                 ,"ZARA"],
     "Internet/Phone": ["fastnet", "bredbånd", "telia", "tdc", "hiper", "yousee", "YouSee","oister", "cbb mobil", "telefon"],
-    "Dining Out": ["restaurant", "cafe", "just eat", "wolt", "mcdonalds", "burger king", "pizzeria"],
-    "Subscriptions": ["netflix", "spotify", "hbo", "disney+", "apple music", "storytel", "mofibo", "tv2 play", "viaplay", "avis", "blad"],
+    "Dining Out": ["restaurant", "cafe", "just eat", "wolt", "mcdonalds", "burger king", "pizzeria"
+                    ,"SIDECAR", "PIZZA OTTO", "REFFEN", "JAGGER", "RizRaz", "WOK", "UNION KITCHEN"
+                    ,"MobilePay Chantal", "MobilePay Florin", "MobilePay Ana Caroli", "MobilePay Desiree"
+                    ,"MobilePay Carlos"
+                    ,"MAD OG KAFFE", 'TABERNA', "RTE.", "CASA", "Burgermeister", "RINCON", "CIRKUS APS"
+                    ,"FIVE GUYS", "BURGER", "BODEGAS", "SUSHI", "FOOD", "ISMAGERIET", "THAI KACHA"
+                    ,"7-ELEVEN", "MAGDALENA", "SHAKE"],
+    "Drinks": ["NIGHTPAY", "PROUD MARY CPH", "Sorte Firkant", "IRISH PUB", "ANARKOLI", "BAR", "BLUME"
+                ,"LAVAPI", "STELLA POLARIS", "MIKKELLER", "CERVECERIA", "THE LIVING ROOM"
+                ,"Dimitrios", "Christos", "MobilePay Ninci"],
+    "Subscriptions": ["netflix", "spotify", "hbo", "disney+", "apple music", "storytel", "mofibo"
+                    , "tv2 play", "viaplay", "avis", "blad"],
     "Healthcare": ["apotek", "læge", "tandlæge", "sygehus", "optiker", "fysioterapeut"],
-    "Transfers": ["overførsel", "transfer", "egen konto", "mobilepay overførsel"], # To filter out internal movements
+    "Transfers": ["overførsel", "transfer", "egen konto", "mobilepay overførsel", "Overført", "Udenl. overf."
+                    ,"MobilePay Beatriz"], 
     "Cash Withdrawal": ["hævning", "atm", "kontant", "bankautomat"],
-    "Entertainment": ["biograf", "kino", "koncert", "teater", "museum", "tivoli", "zoo", "Instant Gaming"],
+    "Entertainment": ["biograf", "kino", "koncert", "teater", "museum", "tivoli", "zoo", "Instant Gaming"
+                        ,"BILLETLUGEN.DK", "BLS*MYHERITAGE", "GOOGLE", "Nintendo"],
     "Gifts/Charity": ["gave", "donation", "indsamling", "røde kors"],
     "Financial/Fees": ["gebyr", "renteudgift", "bank fee", "finance charge", "Nordea-min"],
     "Education": ["kursus", "uddannelse", "skole", "universitet"],
-    "Personal Care": ["frisør", "kosmetolog", "barber"],
-    "Other Income": ["tilbagebetaling", "refund", "renteindtægt"], # Income not from salary
+    "Personal Care": ["frisør", "kosmetolog", "barber", "PELUQUEROS", "PELUQUERIA"],
+    "Other Income": ["tilbagebetaling", "refund", "renteindtægt"], 
     "Bank Interest": ["Renter"],
     "Rent Flat": ["Danielle Benamour", "Domus Apartments DK"],
     "Deposit Flat": ["Deposit"],
@@ -45,48 +65,35 @@ CATEGORY_RULES = {
 def categorize_transaction_row(row_description, rules):
     """
     Categorizes a single transaction description based on rules.
-    Returns the category name or a default if no match.
+    Returns the category name or "Uncategorized" if no match.
     """
     if pd.isna(row_description):
         return "Uncategorized"
-
+    
     description_lower = str(row_description).lower()
 
     for category, keywords in rules.items():
         for keyword in keywords:
-            # Using \b for word boundaries to avoid partial matches (e.g., "car" in "card")
-            # Make keyword lowercase as well for consistent matching
-            pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
+            kw_lower = keyword.lower()
+            # Option 1: match if description_lower contains 'kw_lower' preceded by a word‐boundary
+            pattern = r"\b" + re.escape(kw_lower)
             if re.search(pattern, description_lower):
                 return category
-    
-    return "Uncategorized" # Default category if no rule matches
+
+    return "Uncategorized"
 
 def categorize_transactions_df(df, rules):
     """
     Adds a 'Category' column to the DataFrame by applying categorization rules.
-    df: Standardized DataFrame with a 'Description' column.
-    rules: Dictionary of category rules (like CATEGORY_RULES).
+    df must contain a 'Description' column.
     """
     if 'Description' not in df.columns:
         raise ValueError("DataFrame must contain a 'Description' column for categorization.")
     
-    # Ensure the 'Category' column exists, initialize if not
     if 'Category' not in df.columns:
-        df['Category'] = "Uncategorized" # Default for all initially
+        df['Category'] = "Uncategorized"
 
-    # Apply categorization
-    # For potentially large DFs, df.apply can be slow.
-    # A more optimized way might involve creating boolean masks for each keyword list
-    # or using str.contains with a regex joining all keywords for a category.
-    # However, for moderate datasets, .apply() is fine and readable.
-    
-    # Example: Prioritize existing 'TypeExpense' from Danske if it's already there and valid
-    # This logic depends on how you want to integrate your pre-categorized Danske data.
-    # For now, let's assume we always re-categorize based on rules for consistency.
-    
     df['Category'] = df['Description'].apply(lambda desc: categorize_transaction_row(desc, rules))
-    
     return df
 
 # --- Example Usage (for testing this file directly) ---
