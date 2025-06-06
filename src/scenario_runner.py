@@ -1,13 +1,18 @@
 # src/scenario_runner.py
+"""import sys
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(PROJECT_ROOT))"""
+
 import pandas as pd
-from financial_models import (
+from src.financial_models import (
     calculate_compound_growth, project_investment_value_over_time,
     calculate_loan_payment, generate_amortization_schedule,
     project_asset_value, project_asset_value_over_time,
     apply_inflation
     # Import others as needed
 )
-from scenario_config import (ScenarioConfig
+from src.scenario_config import (ScenarioConfig
                                  ,CashHoldingParams
                                  ,StockInvestmentParams
                                  ,RealEstateParams
@@ -180,7 +185,7 @@ def run_scenario(config: ScenarioConfig) -> ScenarioConfig:
         # Living expenses (This is a big assumption or needs detailed input)
         # For now, let's assume a fixed (inflated) living expense not covered by specific models
         # This should ideally come from Phase 1 analysis or be an input.
-        annual_living_expenses_base = 30000 # Example base
+        annual_living_expenses_base = config.base_annual_living_expenses # Example base
         annual_living_expenses_inflated = apply_inflation(annual_living_expenses_base, inflation_rate, year)
         
         # Net Cash Flow for the year (approximation)
