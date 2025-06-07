@@ -1,0 +1,58 @@
+{
+    "name": "Default Scenario alvaro",
+    "description": "A baseline financial projection.",
+    "horizon_years": 30,
+    "scenario_base_currency": "DKK",
+    "general_annual_inflation_rate": 0.02,
+    "initial_cash_on_hand": 50000.0,
+    "base_annual_living_expenses": 30000.0,
+    "cash_holdings": [
+        {
+            "name": "Primary Cash",
+            "initial_amount": 50000.0,
+            "annual_interest_rate": 0.001
+        }
+    ],
+    "stock_investments": [
+        {
+            "name": "Stock Portfolio",
+            "initial_investment": 0.0,
+            "annual_contribution": 0.0,
+            "expected_annual_return": 0.07
+        }
+    ],
+    "real_estate_investments": [
+        {
+            "name": "Property Investment",
+            "is_primary_residence": false,
+            "purchase_price": 0.0,
+            "down_payment_pct": 0.2,
+            "mortgage_term_years": 20,
+            "mortgage_interest_rate_annual": 0.035,
+            "property_tax_annual_pct_value": 0.005,
+            "insurance_annual_fixed": 500.0,
+            "maintenance_annual_pct_value": 0.01,
+            "expected_annual_appreciation": 0.03,
+            "is_rental": false,
+            "monthly_rent_income": 0.0,
+            "vacancy_rate_pct": 0.05,
+            "management_fee_pct_rent": 0.08,
+            "equivalent_monthly_rent_saved": 0.0,
+            "selling_costs_pct": 0.06
+        }
+    ],
+    "income_sources": [
+        {
+            "name": "Primary Salary",
+            "initial_annual_income": 60000.0,
+            "expected_annual_growth_rate": 0.025
+        }
+    ],
+    "major_expenses": [
+        {
+            "name": "Future Expense",
+            "year_of_expense": 5,
+            "amount": 10000.0
+        }
+    ]
+}

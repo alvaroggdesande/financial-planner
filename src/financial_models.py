@@ -198,6 +198,13 @@ def project_simple_rental_cashflow_annually(
     # Dummy DataFrame for structure
     return pd.DataFrame({'Year': range(1, years_horizon + 1), 'Net_Cashflow_Annual': [1000*i for i in range(1, years_horizon + 1)]})
 
+#nominal vs real
+def adjust_for_inflation_to_present_value(future_value: float, annual_inflation_rate: float, years: int) -> float:
+    """Calculates the present value of a future amount, adjusted for inflation."""
+    if annual_inflation_rate == -1: # Avoid division by zero if rate is -100%
+        return float('inf') if future_value != 0 else 0 # Or handle as error
+    return future_value / ((1 + annual_inflation_rate)**years)
+
 
 if __name__ == '__main__':
     # Test functions

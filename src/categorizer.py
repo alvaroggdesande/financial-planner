@@ -34,7 +34,7 @@ CATEGORY_RULES = {
                     ,"MobilePay Carlos"
                     ,"MAD OG KAFFE", 'TABERNA', "RTE.", "CASA", "Burgermeister", "RINCON", "CIRKUS APS"
                     ,"FIVE GUYS", "BURGER", "BODEGAS", "SUSHI", "FOOD", "ISMAGERIET", "THAI KACHA"
-                    ,"7-ELEVEN", "MAGDALENA", "SHAKE", "Brauhaus"],
+                    ,"7-ELEVEN", "MAGDALENA", "SHAKE", "Brauhaus", "Cafe", "Caffe", "Kaffe"],
     "Drinks": ["NIGHTPAY", "PROUD MARY CPH", "Sorte Firkant", "IRISH PUB", "ANARKOLI", "BAR", "BLUME"
                 ,"LAVAPI", "STELLA POLARIS", "MIKKELLER", "CERVECERIA", "THE LIVING ROOM"
                 ,"Dimitrios", "Christos", "MobilePay Ninci"],
@@ -49,7 +49,7 @@ CATEGORY_RULES = {
     "Gifts/Charity": ["gave", "donation", "indsamling", "røde kors"],
     "Financial/Fees": ["gebyr", "renteudgift", "bank fee", "finance charge", "Nordea-min"],
     "Education": ["kursus", "uddannelse", "skole", "universitet"],
-    "Personal Care": ["frisør", "kosmetolog", "barber", "PELUQUEROS", "PELUQUERIA"],
+    "Personal Care": ["frisør", "kosmetolog", "barber", "PELUQUEROS", "PELUQUERIA", "Artemisa"],
     "Other Income": ["tilbagebetaling", "refund", "renteindtægt"], 
     "Bank Interest": ["Renter"],
     "Rent Flat": ["Danielle Benamour", "Domus Apartments DK"],

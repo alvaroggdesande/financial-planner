@@ -65,10 +65,10 @@ def save_scenario_config(config: ScenarioConfig, filename: str):
     # A library like `dataclasses-json` or Pydantic would handle this better.
     # For this example, we'll focus on the UI and assume a more robust save/load later.
     
-    # st.warning("Save/Load for nested components is simplified for this example.")
-    # with open(filepath, 'w') as f:
-    #     json.dump(config_dict, f, indent=4) # This will fail for nested dataclasses
-    # st.success(f"Scenario '{filename}' (partially) saved.")
+    st.warning("Save/Load for nested components is simplified for this example.")
+    with open(filepath, 'w') as f:
+        json.dump(config_dict, f, indent=4) # This will fail for nested dataclasses
+    st.success(f"Scenario '{filename}' (partially) saved.")
     st.info("Full scenario saving with all components needs a more robust serialization method.")
 
 
@@ -108,6 +108,16 @@ cs.general_annual_inflation_rate = st.sidebar.slider("Assumed Annual Inflation R
 
 st.sidebar.markdown("---")
 
+# choosing currency on the side bar
+cs.scenario_base_currency = st.sidebar.selectbox(
+    "Scenario Base Currency", 
+    ["DKK", "EUR"], 
+    index=0, # Default to DKK
+    key="scenario_currency"
+)
+st.session_state.currency_suffix_scenario = cs.scenario_base_currency # For display labels
+
+
 # --- Main Area: Scenario Component Definitions ---
 st.header(f"Define Components for: {cs.name}")
 
@@ -125,33 +135,60 @@ with st.expander("Living Expenses & Starting Cash", expanded=True):
     elif cs.cash_holdings[0].name == "Starting Cash": # Update if exists
          cs.cash_holdings[0].initial_amount = cs.initial_cash_on_hand
     
-    use_historical_expenses = st.checkbox("Use historical average for baseline living expenses?", value=True, key="use_hist_exp")
+    use_historical_expenses = st.checkbox(
+    "Use historical average for baseline living expenses?", 
+    value=True, # Default to trying to use it
+    key="use_hist_exp"
+    )
+    calculated_hist_avg_exp = None
+
     if use_historical_expenses:
         historical_transactions = st.session_state.get('categorized_transactions_df', pd.DataFrame())
         if not historical_transactions.empty:
-            # Define categories typically handled by other components or not part of 'living expenses'
-            # This should be configurable by the user ideally
-            auto_excluded_categories = ["Rent/Mortgage", "Investments", "Savings Transfer", "Large Debt Payment"] 
+            all_hist_categories = sorted(historical_transactions['Category'].unique().tolist())
             
-            # Get this from config or user input
-            annual_living_expenses_base = calculate_historical_average_annual_living_expenses(
-                historical_transactions,
-                exclude_categories=auto_excluded_categories
+            # Add categories to exclude by default
+            default_excluded = ["Rent Flat", "Deposit Flat"]
+            
+            # Filter default_excluded to only include categories actually present in all_hist_categories
+            actual_default_excluded = [cat for cat in default_excluded if cat in all_hist_categories]
+            
+            excluded_categories_for_base = st.multiselect(
+                "Exclude these categories from historical average (if handled elsewhere in scenario):",
+                options=all_hist_categories, # These are the valid options
+                default=actual_default_excluded, # This list MUST only contain items from options
+                key="hist_exp_exclude_cats"
             )
-            st.info(f"Estimated historical average annual living expenses (base year, excluding major items): {annual_living_expenses_base:,.2f} {st.session_state.get('currency_suffix','DKK')}")
-            # Store this in the scenario config, perhaps in a dedicated field or as a default for scenario_runner
-            # For now, scenario_runner uses a hardcoded base; this needs to be passed.
-            # Let's add a field to ScenarioConfig:
-            # @dataclass ScenarioConfig:
-            #    ...
-            #    base_annual_living_expenses: float = 30000.0
-            cs.base_annual_living_expenses = annual_living_expenses_base # Add this to your dataclass
-        else:
-            st.warning("No historical data found in session. Please input living expenses manually or run Transaction Tracker first.")
-            cs.base_annual_living_expenses = st.number_input("Manually set base annual living expenses:", min_value=0.0, value=30000.0, step=1000.0, format="%.2f")
-    else:
-        cs.base_annual_living_expenses = st.number_input("Manually set base annual living expenses:", min_value=0.0, value=30000.0, step=1000.0, format="%.2f")
+            
+            calculated_hist_avg_exp = calculate_historical_average_annual_living_expenses(
+                historical_transactions,
+                exclude_categories=excluded_categories_for_base # Use the user's actual selection
+            )
 
+            st.info(f"Est. historical avg. annual living expenses (base year): {calculated_hist_avg_exp:,.2f} {st.session_state.get('currency_suffix_scenario','DKK')}")
+            cs.base_annual_living_expenses = calculated_hist_avg_exp # Set it on the config
+        else:
+            st.warning("No historical data in session from Transaction Tracker. Input expenses manually or load data in Tracker first.")
+            # Fallback to manual input if historical not available/chosen
+            cs.base_annual_living_expenses = st.number_input(
+                "Manually set base annual living expenses (base year value):", 
+                min_value=0.0, value=cs.base_annual_living_expenses or 30000.0, step=1000.0, format="%.2f"
+            )
+    else: # Manual input
+        cs.base_annual_living_expenses = st.number_input(
+            "Manually set base annual living expenses (base year value):", 
+            min_value=0.0, value=cs.base_annual_living_expenses or 30000.0, step=1000.0, format="%.2f"
+        )
+
+    # Allow user to adjust the calculated/inputted base for the scenario (e.g., "I plan to save 10% more")
+    expense_adjustment_pct = st.slider(
+        "Adjust base living expenses for this scenario by (%):",
+        min_value=-50.0, max_value=50.0, value=0.0, step=1.0,
+        help="E.g., -10% if you plan to be more frugal in this scenario, +5% for lifestyle inflation."
+    )
+    if cs.base_annual_living_expenses is not None: # Check if it was set
+        cs.base_annual_living_expenses *= (1 + expense_adjustment_pct / 100)
+        st.write(f"Adjusted base annual living expenses for scenario: {cs.base_annual_living_expenses:,.2f} {st.session_state.get('currency_suffix_scenario','DKK')}")
 
 # --- Income Sources ---
 # For now, assume one primary income source. Expand later for multiple.
@@ -288,25 +325,76 @@ if st.session_state.scenario_results is not None and not st.session_state.scenar
 
     # Net Worth Over Time Chart
     st.subheader("Projected Net Worth Over Time")
-    if 'Net_Worth' in results_df.columns and 'Year' in results_df.columns:
-        # For st.line_chart, it's often best if the x-axis is the index
-        chart_data_nw = results_df.set_index('Year')[['Net_Worth']]
-        st.line_chart(chart_data_nw)
+    if 'Net_Worth_Nominal' in results_df.columns and \
+       'Net_Worth_Real' in results_df.columns and \
+       'Year' in results_df.columns:
+        
+        # Let user choose which value to see, or plot both
+        display_value_type = st.radio(
+            "Display Net Worth As:", 
+            ("Nominal Value (Future Money)", f"Real Value (Today's {cs.scenario_base_currency} Purchasing Power)"),
+            key="nw_display_type"
+        )
+
+        if display_value_type.startswith("Nominal"):
+            chart_data_nw = results_df.set_index('Year')[['Net_Worth_Nominal']]
+            st.line_chart(chart_data_nw)
+            st.caption(f"Nominal value in future {cs.scenario_base_currency}, not adjusted for inflation.")
+        else:
+            chart_data_nw_real = results_df.set_index('Year')[['Net_Worth_Real']]
+            st.line_chart(chart_data_nw_real)
+            st.caption(f"Real value in today's {cs.scenario_base_currency} purchasing power (inflation adjusted).")
+
+        # Option to plot both for comparison
+        if st.checkbox("Show Nominal and Real Net Worth on same chart?"):
+            chart_data_nw_both = results_df.set_index('Year')[['Net_Worth_Nominal', 'Net_Worth_Real']]
+            st.line_chart(chart_data_nw_both)
     else:
-        st.warning("Net Worth or Year column missing in results.")
+        st.warning("Net Worth (Nominal/Real) or Year column missing in results.")
+
+    # Update Summary Metrics display
+    if st.session_state.scenario_summary:
+        st.subheader("Summary")
+        summary = st.session_state.scenario_summary
+        # ... other metrics ...
+        col_sm3.metric(f"Ending Net Worth (Nominal {cs.scenario_base_currency})", 
+                       f"{summary.get('Ending_Net_Worth_Nominal', 0):,.0f}")
+        # Add another column or row for Real Net Worth
+        st.metric(f"Ending Net Worth (Real {cs.scenario_base_currency} - Today's Value)", 
+                  f"{summary.get('Ending_Net_Worth_Real', 0):,.0f}")
+    
 
     with st.expander("View Detailed Results Table"):
         st.dataframe(results_df.style.format("{:,.0f}", subset=pd.IndexSlice[:, results_df.select_dtypes(include=np.number).columns]))
 
-    # TODO: Add more charts (Asset breakdown, Debt breakdown, Cash Flow)
-    # Example: Asset Breakdown
+
+    #Projects assets break down graph
     st.subheader("Projected Asset Breakdown Over Time")
-    asset_cols = ['Assets_Cash', 'Assets_Stocks', 'Assets_RealEstate_Equity']
-    if all(col in results_df.columns for col in asset_cols) and 'Year' in results_df.columns:
+    asset_cols = ['Assets_Cash_Nominal', 'Assets_Stocks_Nominal', 'Assets_RealEstate_Equity_Nominal']
+
+    # --- Start Debug ---
+    #st.write("DEBUG: Checking columns for Asset Breakdown:")
+    #st.write(f"results_df columns: {results_df.columns.tolist()}")
+    #st.write(f"Expected asset_cols: {asset_cols}")
+
+    year_present = 'Year' in results_df.columns
+    #st.write(f"'Year' column present: {year_present}")
+
+    all_asset_cols_present = all(col in results_df.columns for col in asset_cols)
+    #st.write(f"All expected asset_cols present: {all_asset_cols_present}")
+
+    if not all_asset_cols_present:
+        missing_cols = [col for col in asset_cols if col not in results_df.columns]
+        st.warning(f"Missing asset breakdown columns: {missing_cols}")
+    # --- End Debug ---
+
+    if all_asset_cols_present and year_present:
         chart_data_assets = results_df.set_index('Year')[asset_cols]
         st.area_chart(chart_data_assets) # Stacked area chart
     else:
-        st.write("Asset breakdown columns missing, cannot plot.")
+        st.write("Asset breakdown columns missing or 'Year' column missing, cannot plot.")
+
+    # TODO: Add more charts (Asset breakdown, Debt breakdown, Cash Flow)
 
 else:
     st.info("Define a scenario and click 'Run Scenario Projection' to see results.")

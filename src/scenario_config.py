@@ -75,6 +75,8 @@ class ScenarioConfig:
     # Starting financial position (can be pre-filled)
     initial_cash_on_hand: float = 50000.0 # This might be part of a CashHoldingComponent
     # initial_net_worth: float = 100000.0 # Or calculate from initial components
+    # ... other fields ...
+    base_annual_living_expenses: Optional[float] = 30000.0
 
     # Components of the scenario
     cash_holdings: List[CashHoldingParams] = field(default_factory=list)
@@ -89,3 +91,35 @@ class ScenarioConfig:
     # To store results from the runner
     results_timeseries: Optional[pd.DataFrame] = None # Will hold year-by-year data
     summary_metrics: Optional[Dict[str, Any]] = None # Key outcome numbers
+
+    # Custom methods to handle DataFrame results for serialization/deserialization
+    def set_results_timeseries(self, df: pd.DataFrame):
+        """Converts DataFrame to list of dicts for storage."""
+        if df is not None and not df.empty:
+            df_copy = df.copy()
+            for col in df_copy.select_dtypes(include=['datetime64[ns]', 'datetime64[ns, UTC]']).columns:
+                # Ensure Timestamps are converted to ISO strings for JSON
+                # Pydantic v2 handles datetime serialization well, but explicit can be safer for generic JSON
+                df_copy[col] = df_copy[col].dt.strftime('%Y-%m-%dT%H:%M:%S') # Example ISO format
+            self.results_timeseries_data = df_copy.to_dict(orient='records')
+        else:
+            self.results_timeseries_data = None
+
+    def get_results_timeseries_df(self) -> Optional[pd.DataFrame]:
+        """Converts stored list of dicts back to DataFrame."""
+        if self.results_timeseries_data:
+            df = pd.DataFrame.from_records(self.results_timeseries_data)
+            # Attempt to convert known date columns back to datetime
+            # Example: if 'Year' column was originally an int, no need to convert.
+            # If you stored actual date columns as ISO strings, convert them back:
+            # for col in df.columns:
+            #     if "date" in col.lower() or "time" in col.lower(): # Heuristic
+            #         try:
+            #             df[col] = pd.to_datetime(df[col], errors='coerce')
+            #         except Exception:
+            #             pass # Keep as string if conversion fails
+            return df
+        return None
+
+    class Config:
+        validate_assignment = True # Re-validate fields when they are assigned a new value
